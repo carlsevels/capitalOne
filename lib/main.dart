@@ -26,6 +26,10 @@ class Main extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(initialRoute: initialRoute, getPages: Nav.routes);
+    return GetMaterialApp(
+      initialRoute: initialRoute,
+      getPages: Nav.routes,
+      debugShowCheckedModeBanner: false,
+    );
   }
 }
