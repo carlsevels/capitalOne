@@ -1,0 +1,1 @@
+export 'package:capital_one/infrastructure/navigation/bindings/controllers/home.controller.binding.dart'; 
