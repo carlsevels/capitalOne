@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginController extends GetxController {
   final supabase = Supabase.instance.client;
+  final RxBool isObscureText = false.obs;
 
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();

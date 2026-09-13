@@ -447,7 +447,7 @@ class DashboardController extends GetxController {
     }
   }
 
-  Future<void> realizarTransferencia({
+Future<void> realizarTransferencia({
     required int cuentaId,
     required int cuentaDestinoId,
     required double cantidad,
@@ -475,14 +475,20 @@ class DashboardController extends GetxController {
         return;
       }
 
-      // Buscar si la cuenta requiere aprobación mediante un permiso
+      // Verificamos si existe un permiso de aprobación para esta cuenta origen
       final permiso = await supabase
           .from('permisos')
           .select('user_id')
           .eq('cuenta_id', cuentaId)
           .limit(1)
           .maybeSingle();
-      if (permiso != null) {
+
+      // Determinamos si requiere aprobación o es directo
+      final bool requiereAprobacion = permiso != null && permiso['user_id'] != null;
+
+      if (!requiereAprobacion) {
+        // --- FLUJO DIRECTO (Sin permisos de aprobación) ---
+        // Inserta movimientos y descuenta/suma saldos obligatoriamente
         await supabase.from('movimientos').insert({
           'cuenta_id': cuentaId,
           'tipo_id': 1,
@@ -501,37 +507,9 @@ class DashboardController extends GetxController {
           'status_id': 1,
         });
 
+        // Aplicar rebaja y aumento de saldos aquí de forma directa
         await restarSaldoCuentaOrigen(cantidad);
         await sumarSaldoCuentaDestino(cuentaDestinoId, cantidad);
-      }
-      if (permiso == null || permiso['user_id'] == null) {
-        // No hay permisos de aprobación: Se ejecuta y manda directo a movimientos
-        try {
-          await supabase.from('movimientos').insert({
-            'cuenta_id': cuentaId,
-            'tipo_id': 1,
-            'cantidad': cantidad,
-            'descripcion': descripcion,
-            'medio_id': medioId,
-            'status_id': 1,
-          });
-
-          await supabase.from('movimientos').insert({
-            'cuenta_id': cuentaDestinoId,
-            'tipo_id': 2,
-            'cantidad': cantidad,
-            'descripcion': 'Recepción: $descripcion',
-            'medio_id': medioId,
-            'status_id': 1,
-          });
-
-          // Actualizar saldos al completarse de forma directa
-          await restarSaldoCuentaOrigen(cantidad);
-          await sumarSaldoCuentaDestino(cuentaDestinoId, cantidad);
-        } catch (e) {
-          print("Error al insertar movimiento directo: $e");
-          rethrow;
-        }
 
         Get.snackbar(
           'Éxito',
@@ -543,23 +521,19 @@ class DashboardController extends GetxController {
         return;
       }
 
-      // Sí hay permisos: Se manda a pre_movimiento para aprobación (sin tocar saldos todavía)
+      // --- FLUJO CON APROBACIÓN (Requiere permisos) ---
+      // Se manda a pre_movimiento y NO toca los saldos
       final int userPorAprobarId = (permiso['user_id'] as num).toInt();
 
-      try {
-        await supabase.from('pre_movimiento').insert({
-          'cuenta_id': cuentaId,
-          'cuenta_destino_id': cuentaDestinoId,
-          'user_por_aprobar_id': userPorAprobarId,
-          'cantidad': cantidad,
-          'descripcion': descripcion,
-          'medio_id': medioId,
-          'status_id': 1,
-        });
-      } catch (e) {
-        print("Error al agregar pre_movimiento: $e");
-        rethrow;
-      }
+      await supabase.from('pre_movimiento').insert({
+        'cuenta_id': cuentaId,
+        'cuenta_destino_id': cuentaDestinoId,
+        'user_por_aprobar_id': userPorAprobarId,
+        'cantidad': cantidad,
+        'descripcion': descripcion,
+        'medio_id': medioId,
+        'status_id': 1,
+      });
 
       Get.snackbar(
         'Éxito',
@@ -570,9 +544,9 @@ class DashboardController extends GetxController {
       );
 
       await preMovimientosPorAprobar();
+      
     } catch (e) {
       print('Error al registrar transferencia: $e');
-
       Get.snackbar(
         'Error',
         'No se pudo completar la transferencia: $e',
@@ -580,7 +554,6 @@ class DashboardController extends GetxController {
       );
     }
   }
-
   Future<void> getMediosTransferencia() async {
     try {
       final response = await Supabase.instance.client

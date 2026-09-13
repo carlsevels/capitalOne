@@ -15,23 +15,17 @@ class DashboardScreen extends GetView<DashboardController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F2942),
+        surfaceTintColor: Color(0xFFF4F6F9),
+        shadowColor: Colors.black,
+        backgroundColor: const Color(0xFFF4F6F9),
         elevation: 0,
-        title: const Text(
-          'CAPITAL ONE',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
-          ),
-        ),
-        centerTitle: true,
+        title: Container(height: 50, child: Image.asset('logos/besideChico.png')),
+        centerTitle: false,
         actions: [
-          IconButton(
+          TextButton.icon(
             onPressed: () => controller.signOut(),
-            icon: const Icon(Icons.logout_rounded, color: Colors.white),
-            tooltip: 'Cerrar Sesión',
+            icon: const Icon(Icons.logout_rounded, color: Colors.black,),
+            label: Text("Salir", style: TextStyle(color: Colors.black),),
           ),
         ],
       ),

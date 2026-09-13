@@ -10,15 +10,15 @@ class LoginScreen extends GetView<LoginController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Login"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.toNamed(Routes.HOME);
-            },
-            child: Text("Inicio"),
-          ),
-        ],
+        surfaceTintColor: Color(0xFFF4F6F9),
+        shadowColor: Colors.black,
+        backgroundColor: const Color(0xFFF4F6F9),
+        elevation: 0,
+        title: Container(
+          height: 50,
+          child: Image.asset('logos/besideChico.png'),
+        ),
+        centerTitle: false,
       ),
       backgroundColor: const Color(0xFFF4F6F9),
       body: Center(
@@ -55,42 +55,12 @@ class LoginScreen extends GetView<LoginController> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F2942),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.account_balance_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'BANCO DIGITAL',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                              color: Color(0xFF0F2942),
-                            ),
-                          ),
-                        ],
+                      Container(
+                        height: 200,
+                        child: Image.asset('logos/beside.png'),
                       ),
+
                       const SizedBox(height: 36),
-                      const Text(
-                        'Apertura de Cuenta Digital',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1D2D3D),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
                       const Text(
                         'Ingresa tus credenciales para registrar tu perfil seguro.',
                         style: TextStyle(
@@ -159,51 +129,63 @@ class LoginScreen extends GetView<LoginController> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      TextField(
-                        controller: controller.passwordController,
-                        decoration: InputDecoration(
-                          hintText: 'Mínimo 8 caracteres',
-                          hintStyle: const TextStyle(
-                            color: Color(0xFF9FB3C8),
-                            fontSize: 14,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: Color(0xFF627D98),
-                            size: 20,
-                          ),
-                          suffixIcon: const Icon(
-                            Icons.visibility_off_outlined,
-                            color: Color(0xFF627D98),
-                            size: 20,
-                          ),
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1),
+                      Obx(
+                        () => TextField(
+                          controller: controller.passwordController,
+                          decoration: InputDecoration(
+                            hintText: 'Mínimo 8 caracteres',
+                            hintStyle: const TextStyle(
+                              color: Color(0xFF9FB3C8),
+                              fontSize: 14,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                              color: Color(0xFF627D98),
+                              size: 20,
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                controller.isObscureText.value =
+                                    !controller.isObscureText.value;
+                              },
+                              icon: Icon(
+                                controller.isObscureText.value
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: Color(0xFF627D98),
+                                size: 20,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 16,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF0F2942),
+                                width: 1.5,
+                              ),
                             ),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF0F2942),
-                              width: 1.5,
-                            ),
-                          ),
+                          obscureText: controller.isObscureText.value
+                              ? false
+                              : true,
                         ),
-                        obscureText: true,
                       ),
                       const SizedBox(height: 30),
                       ElevatedButton(
