@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:capital_one/infrastructure/modelos/cuenta.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,13 +17,16 @@ class DashboardScreen extends GetView<DashboardController> {
         shadowColor: Colors.black,
         backgroundColor: const Color(0xFFF4F6F9),
         elevation: 0,
-        title: Container(height: 50, child: Image.asset('logos/besideChico.png')),
+        title: Container(
+          height: 50,
+          child: Image.asset('assets/logos/besideChico.png'),
+        ),
         centerTitle: false,
         actions: [
           TextButton.icon(
             onPressed: () => controller.signOut(),
-            icon: const Icon(Icons.logout_rounded, color: Colors.black,),
-            label: Text("Salir", style: TextStyle(color: Colors.black),),
+            icon: const Icon(Icons.logout_rounded, color: Colors.black),
+            label: Text("Salir", style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -227,6 +228,8 @@ class DashboardScreen extends GetView<DashboardController> {
                   _buildDireccionesSection(),
                   const SizedBox(height: 24),
                   _buildPreMovimientosSection(),
+                  const SizedBox(height: 24),
+                  _buildPreMovimientosRechazadosSection(),
                 ],
               ),
             ),
@@ -235,7 +238,6 @@ class DashboardScreen extends GetView<DashboardController> {
       ],
     );
   }
-
   // ==========================================
   // WIDGETS COMPARTIDOS / SECCIONES
   // ==========================================
@@ -457,18 +459,178 @@ class DashboardScreen extends GetView<DashboardController> {
                                 );
                                 Get.defaultDialog(
                                   title: "",
-                                  content: Obx(
-                                    () => Column(
+                                  titlePadding: EdgeInsets.zero,
+                                  contentPadding: const EdgeInsets.fromLTRB(
+                                    24,
+                                    0,
+                                    24,
+                                    24,
+                                  ),
+                                  backgroundColor: Colors.white,
+
+                                  content: Obx(() {
+                                    final datos = controller
+                                        .datosPersonalesCuentaVinculada;
+                                    final nombreCompleto =
+                                        '${datos.nombre ?? ''} ${datos.apellidoPaterno ?? ''} ${datos.apellidoMaterno ?? ''}'
+                                            .trim();
+                                    final parentesco =
+                                        controller
+                                            .parentescosOne
+                                            .value
+                                            .nombre ??
+                                        'No especificado';
+
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
                                       children: [
-                                        Text(
-                                          "${controller.datosPersonalesCuentaVinculada.nombre} ${controller.datosPersonalesCuentaVinculada.apellidoPaterno} ${controller.datosPersonalesCuentaVinculada.apellidoMaterno}",
+                                        // Icono superior decorativo
+                                        Center(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF1F5F9),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.person_outline_rounded,
+                                              size: 32,
+                                              color: Color(0xFF0F172A),
+                                            ),
+                                          ),
                                         ),
-                                        Text(
-                                          "Parentesco: ${controller.parentescosOne.value.nombre}",
+                                        const SizedBox(height: 16),
+
+                                        // Título del diálogo
+                                        const Text(
+                                          "Cuenta Vinculada",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          "Detalles del titular asociado",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+
+                                        // Tarjeta con la información
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: const Color(0xFFE2E8F0),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                "TITULAR",
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF64748B),
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                nombreCompleto.isEmpty
+                                                    ? 'Sin nombre registrado'
+                                                    : nombreCompleto,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF0F172A),
+                                                ),
+                                              ),
+                                              const Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 12,
+                                                ),
+                                                child: Divider(
+                                                  height: 1,
+                                                  color: Color(0xFFE2E8F0),
+                                                ),
+                                              ),
+                                              const Text(
+                                                "PARENTESCO",
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF64748B),
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.hub_outlined,
+                                                    size: 16,
+                                                    color: Color(0xFF0F172A),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    parentesco,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Color(0xFF0F172A),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+
+                                        // Botón de acción
+                                        SizedBox(
+                                          height: 44,
+                                          child: ElevatedButton(
+                                            onPressed: () => Get.back(),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFF0F172A,
+                                              ),
+                                              foregroundColor: Colors.white,
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            child: const Text(
+                                              "Entendido",
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ],
-                                    ),
-                                  ),
+                                    );
+                                  }),
                                 );
                               },
                               child: Container(
@@ -949,7 +1111,6 @@ class DashboardScreen extends GetView<DashboardController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // CUENTA + IMPORTE
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1008,7 +1169,6 @@ class DashboardScreen extends GetView<DashboardController> {
 
                       const SizedBox(height: 14),
 
-                      // DESCRIPCIÓN
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -1054,7 +1214,7 @@ class DashboardScreen extends GetView<DashboardController> {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                // controller.rechazarPreMovimiento(preMov.id);
+                                controller.rechazarPreMovimiento(preMov.id!);
                               },
                               icon: const Icon(Icons.close_rounded, size: 16),
                               label: const Text('Rechazar'),
@@ -1118,49 +1278,269 @@ class DashboardScreen extends GetView<DashboardController> {
     );
   }
 
-  Widget _buildPreMovimientoInfo({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Row(
+  Widget _buildPreMovimientosRechazadosSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 15, color: const Color(0xFF64748B)),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Movimientos Rechazados',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            Obx(
+              () => Text(
+                '${controller.preMovimientosRechazadosList.length}',
                 style: const TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF94A3B8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF334155),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
+        Obx(() {
+          if (controller.isLoadingRechazados.value) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: CircularProgressIndicator(color: Color(0xFF0F2942)),
+              ),
+            );
+          }
+
+          if (controller.preMovimientosRechazadosList.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Column(
+                children: [
+                  Icon(
+                    Icons.cancel_outlined,
+                    size: 36,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'No hay movimientos rechazados',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: controller.preMovimientosRechazadosList.length,
+            itemBuilder: (context, index) {
+              final item = controller.preMovimientosRechazadosList[index];
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 16,
+                                color: Color(0xFFDC2626),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Folio #${item.id ?? ''}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Rechazado',
+                            style: TextStyle(
+                              color: Color(0xFFDC2626),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.attach_money_rounded,
+                                  size: 15,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Monto',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '\$${item.cantidad?.toStringAsFixed(2) ?? '0.00'}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFDC2626),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 15,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Fecha',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.createdAt != null
+                                          ? (() {
+                                              try {
+                                                final date = DateTime.parse(
+                                                  item.createdAt!,
+                                                );
+                                                final hour = date.hour > 12
+                                                    ? date.hour - 12
+                                                    : (date.hour == 0
+                                                          ? 12
+                                                          : date.hour);
+                                                final minute = date.minute
+                                                    .toString()
+                                                    .padLeft(2, '0');
+                                                final period = date.hour >= 12
+                                                    ? 'p.m.'
+                                                    : 'a.m.';
+                                                return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} - $hour:$minute $period';
+                                              } catch (e) {
+                                                return 'N/A';
+                                              }
+                                            })()
+                                          : 'N/A',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }),
       ],
     );
   }

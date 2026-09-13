@@ -1,4 +1,3 @@
-import 'package:capital_one/infrastructure/navigation/routes.dart';
 import 'package:capital_one/presentation/login/controllers/login.controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,17 +8,6 @@ class LoginScreen extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        surfaceTintColor: Color(0xFFF4F6F9),
-        shadowColor: Colors.black,
-        backgroundColor: const Color(0xFFF4F6F9),
-        elevation: 0,
-        title: Container(
-          height: 50,
-          child: Image.asset('logos/besideChico.png'),
-        ),
-        centerTitle: false,
-      ),
       backgroundColor: const Color(0xFFF4F6F9),
       body: Center(
         child: SingleChildScrollView(
@@ -55,11 +43,10 @@ class LoginScreen extends GetView<LoginController> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
+                      SizedBox(
                         height: 200,
-                        child: Image.asset('logos/beside.png'),
+                        child: Image.asset('assets/logos/beside.png'),
                       ),
-
                       const SizedBox(height: 36),
                       const Text(
                         'Ingresa tus credenciales para registrar tu perfil seguro.',
@@ -130,7 +117,7 @@ class LoginScreen extends GetView<LoginController> {
                       ),
                       const SizedBox(height: 6),
                       Obx(
-                        () => TextField(
+                        () => TextFormField(
                           controller: controller.passwordController,
                           decoration: InputDecoration(
                             hintText: 'Mínimo 8 caracteres',
@@ -150,9 +137,9 @@ class LoginScreen extends GetView<LoginController> {
                               },
                               icon: Icon(
                                 controller.isObscureText.value
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: Color(0xFF627D98),
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: const Color(0xFF627D98),
                                 size: 20,
                               ),
                             ),
@@ -182,9 +169,7 @@ class LoginScreen extends GetView<LoginController> {
                               ),
                             ),
                           ),
-                          obscureText: controller.isObscureText.value
-                              ? false
-                              : true,
+                          obscureText: controller.isObscureText.value,
                         ),
                       ),
                       const SizedBox(height: 30),

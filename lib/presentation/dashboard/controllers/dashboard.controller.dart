@@ -8,7 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashboardController extends GetxController {
   final count = 0.obs;
-
+  final RxList<PreMovimiento> preMovimientosRechazadosList =
+      <PreMovimiento>[].obs;
+  final RxBool isLoadingRechazados = false.obs;
   // Datos Personales
   final Rx<DatosPersonales> _datosPersonales = DatosPersonales().obs;
   DatosPersonales get datosPersonales => _datosPersonales.value;
@@ -98,6 +100,7 @@ class DashboardController extends GetxController {
       getParentesco(),
       getMediosTransferencia(),
       preMovimientosPorAprobar(),
+      cargarPreMovimientosRechazados(),
     ]);
     isLoadingData.value = false;
   }
@@ -447,7 +450,52 @@ class DashboardController extends GetxController {
     }
   }
 
-Future<void> realizarTransferencia({
+  Future<void> rechazarPreMovimiento(int preMovimientoId) async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      final preMovimiento = await supabase
+          .from('pre_movimiento')
+          .select()
+          .eq('id', preMovimientoId)
+          .eq('status_id', 1)
+          .maybeSingle();
+
+      if (preMovimiento == null) {
+        Get.snackbar(
+          'Error',
+          'La transferencia ya no está pendiente de aprobación',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      // Actualizar el status_id a 3 (rechazado)
+      await supabase
+          .from('pre_movimiento')
+          .update({'status_id': 3})
+          .eq('id', preMovimientoId);
+
+      // Refrescar la lista de pre-movimientos
+      await preMovimientosPorAprobar();
+
+      Get.snackbar(
+        'Éxito',
+        'El pre-movimiento ha sido rechazado correctamente',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      print('Error al rechazar transferencia: $e');
+
+      Get.snackbar(
+        'Error',
+        'No se pudo rechazar la transferencia: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> realizarTransferencia({
     required int cuentaId,
     required int cuentaDestinoId,
     required double cantidad,
@@ -484,7 +532,8 @@ Future<void> realizarTransferencia({
           .maybeSingle();
 
       // Determinamos si requiere aprobación o es directo
-      final bool requiereAprobacion = permiso != null && permiso['user_id'] != null;
+      final bool requiereAprobacion =
+          permiso != null && permiso['user_id'] != null;
 
       if (!requiereAprobacion) {
         // --- FLUJO DIRECTO (Sin permisos de aprobación) ---
@@ -544,7 +593,6 @@ Future<void> realizarTransferencia({
       );
 
       await preMovimientosPorAprobar();
-      
     } catch (e) {
       print('Error al registrar transferencia: $e');
       Get.snackbar(
@@ -554,6 +602,7 @@ Future<void> realizarTransferencia({
       );
     }
   }
+
   Future<void> getMediosTransferencia() async {
     try {
       final response = await Supabase.instance.client
@@ -951,6 +1000,46 @@ Future<void> realizarTransferencia({
       print('Pre-movimientos: $response');
     } catch (e) {
       print('Error al cargar pre-movimientos por aprobar: $e');
+    }
+  }
+
+  Future<void> cargarPreMovimientosRechazados() async {
+    try {
+      isLoadingRechazados.value = true;
+      final supabase = Supabase.instance.client;
+      final authUserId = supabase.auth.currentUser?.id;
+      if (authUserId == null) return;
+
+      // Buscamos primero el registro en datos_personales que corresponde a este auth user
+      // (Asumiendo que tienes una columna como user_id o id que los vincula)
+      final datosPersonalesResponse = await supabase
+          .from('datos_personales')
+          .select('id')
+          .eq('owner_id', authUserId)
+          .maybeSingle();
+
+      if (datosPersonalesResponse == null) return;
+      final datosPersonalesId = datosPersonalesResponse['id'];
+
+      final response = await supabase
+          .from('pre_movimiento')
+          .select()
+          .eq('status_id', 3)
+          .eq('user_por_aprobar_id', datosPersonalesId)
+          .order('id', ascending: false);
+
+      preMovimientosRechazadosList.value = (response as List)
+          .map((json) => PreMovimiento.fromJson(json))
+          .toList();
+    } catch (e) {
+      print('Error al cargar pre-movimientos rechazados: $e');
+      Get.snackbar(
+        'Error',
+        'No se pudieron cargar los pre-movimientos rechazados',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoadingRechazados.value = false;
     }
   }
 
