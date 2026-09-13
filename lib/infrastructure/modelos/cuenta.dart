@@ -64,7 +64,9 @@ class Documento {
     createdAt = json['created_at'];
     imagenUno = json['imagen_uno'];
     imagenDos = json['imagen_dos'];
-    tipoDocumentoId = (json['tipo_documento_id'] is String) ? int.tryParse(json['tipo_documento_id']) : json['tipo_documento_id'];
+    tipoDocumentoId = (json['tipo_documento_id'] is String)
+        ? int.tryParse(json['tipo_documento_id'])
+        : json['tipo_documento_id'];
     ownerId = json['owner_id'];
     tipo = json['tipo'];
   }
@@ -88,12 +90,7 @@ class Tipo {
   String? nombre;
   String? color;
 
-  Tipo({
-    this.id,
-    this.createdAt,
-    this.nombre,
-    this.color,
-  });
+  Tipo({this.id, this.createdAt, this.nombre, this.color});
 
   Tipo.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
@@ -118,12 +115,7 @@ class Medio {
   String? nombre;
   String? color;
 
-  Medio({
-    this.id,
-    this.createdAt,
-    this.nombre,
-    this.color,
-  });
+  Medio({this.id, this.createdAt, this.nombre, this.color});
 
   Medio.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
@@ -172,13 +164,25 @@ class Compra {
   Compra.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
     createdAt = json['created_at'];
-    medioId = (json['medio_id'] is String) ? int.tryParse(json['medio_id']) : json['medio_id'];
-    statusId = (json['status_id'] is String) ? int.tryParse(json['status_id']) : json['status_id'];
-    cantidad = json['cantidad'] != null ? (json['cantidad'] is int ? (json['cantidad'] as int).toDouble() : json['cantidad']) : null;
+    medioId = (json['medio_id'] is String)
+        ? int.tryParse(json['medio_id'])
+        : json['medio_id'];
+    statusId = (json['status_id'] is String)
+        ? int.tryParse(json['status_id'])
+        : json['status_id'];
+    cantidad = json['cantidad'] != null
+        ? (json['cantidad'] is int
+              ? (json['cantidad'] as int).toDouble()
+              : json['cantidad'])
+        : null;
     descripcion = json['descripcion'];
     firma = json['firma'];
-    cuentaId = (json['cuenta_id'] is String) ? int.tryParse(json['cuenta_id']) : json['cuenta_id'];
-    merchantId = (json['merchant_id'] is String) ? int.tryParse(json['merchant_id']) : json['merchant_id'];
+    cuentaId = (json['cuenta_id'] is String)
+        ? int.tryParse(json['cuenta_id'])
+        : json['cuenta_id'];
+    merchantId = (json['merchant_id'] is String)
+        ? int.tryParse(json['merchant_id'])
+        : json['merchant_id'];
     medio = json['medio'];
     status = json['status'];
   }
@@ -226,10 +230,20 @@ class Cuenta {
   Cuenta.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
     createdAt = json['created_at'];
-    tipoId = (json['tipo_id'] is String) ? int.tryParse(json['tipo_id']) : json['tipo_id'];
+    tipoId = (json['tipo_id'] is String)
+        ? int.tryParse(json['tipo_id'])
+        : json['tipo_id'];
     apodo = json['apodo'];
-    saldo = json['saldo'] != null ? (json['saldo'] is int ? (json['saldo'] as int).toDouble() : json['saldo']) : null;
-    recompensas = json['recompensas'] != null ? (json['recompensas'] is int ? (json['recompensas'] as int).toDouble() : json['recompensas']) : null;
+    saldo = json['saldo'] != null
+        ? (json['saldo'] is int
+              ? (json['saldo'] as int).toDouble()
+              : json['saldo'])
+        : null;
+    recompensas = json['recompensas'] != null
+        ? (json['recompensas'] is int
+              ? (json['recompensas'] as int).toDouble()
+              : json['recompensas'])
+        : null;
     ownerId = json['owner_id'];
     attendantId = json['attendant_id'];
     tipo = json['tipo'];
@@ -280,12 +294,24 @@ class PreMovimiento {
   PreMovimiento.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
     createdAt = json['created_at'];
-    tipoId = (json['tipo_id'] is String) ? int.tryParse(json['tipo_id']) : json['tipo_id'];
-    cantidad = json['cantidad'] != null ? (json['cantidad'] is int ? (json['cantidad'] as int).toDouble() : json['cantidad']) : null;
+    tipoId = (json['tipo_id'] is String)
+        ? int.tryParse(json['tipo_id'])
+        : json['tipo_id'];
+    cantidad = json['cantidad'] != null
+        ? (json['cantidad'] is int
+              ? (json['cantidad'] as int).toDouble()
+              : json['cantidad'])
+        : null;
     descripcion = json['descripcion'];
-    medioId = (json['medio_id'] is String) ? int.tryParse(json['medio_id']) : json['medio_id'];
-    cuentaId = (json['cuenta_id'] is String) ? int.tryParse(json['cuenta_id']) : json['cuenta_id'];
-    statusId = (json['status_id'] is String) ? int.tryParse(json['status_id']) : json['status_id'];
+    medioId = (json['medio_id'] is String)
+        ? int.tryParse(json['medio_id'])
+        : json['medio_id'];
+    cuentaId = (json['cuenta_id'] is String)
+        ? int.tryParse(json['cuenta_id'])
+        : json['cuenta_id'];
+    statusId = (json['status_id'] is String)
+        ? int.tryParse(json['status_id'])
+        : json['status_id'];
     tipo = json['tipo'];
     medio = json['medio'];
     status = json['status'];
@@ -314,12 +340,7 @@ class StatusModel {
   String? nombre;
   String? color;
 
-  StatusModel({
-    this.id,
-    this.createdAt,
-    this.nombre,
-    this.color,
-  });
+  StatusModel({this.id, this.createdAt, this.nombre, this.color});
 
   StatusModel.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
@@ -370,13 +391,25 @@ class SalidaDinero {
   SalidaDinero.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
     createdAt = json['created_at'];
-    medioId = (json['medio_id'] is String) ? int.tryParse(json['medio_id']) : json['medio_id'];
-    statusId = (json['status_id'] is String) ? int.tryParse(json['status_id']) : json['status_id'];
-    cantidad = json['cantidad'] != null ? (json['cantidad'] is int ? (json['cantidad'] as int).toDouble() : json['cantidad']) : null;
+    medioId = (json['medio_id'] is String)
+        ? int.tryParse(json['medio_id'])
+        : json['medio_id'];
+    statusId = (json['status_id'] is String)
+        ? int.tryParse(json['status_id'])
+        : json['status_id'];
+    cantidad = json['cantidad'] != null
+        ? (json['cantidad'] is int
+              ? (json['cantidad'] as int).toDouble()
+              : json['cantidad'])
+        : null;
     descripcion = json['descripcion'];
     firma = json['firma'];
-    cuentaId = (json['cuenta_id'] is String) ? int.tryParse(json['cuenta_id']) : json['cuenta_id'];
-    tipoId = (json['tipo_id'] is String) ? int.tryParse(json['tipo_id']) : json['tipo_id'];
+    cuentaId = (json['cuenta_id'] is String)
+        ? int.tryParse(json['cuenta_id'])
+        : json['cuenta_id'];
+    tipoId = (json['tipo_id'] is String)
+        ? int.tryParse(json['tipo_id'])
+        : json['tipo_id'];
     medio = json['medio'];
     status = json['status'];
     tipo = json['tipo'];
@@ -405,19 +438,29 @@ class Permiso {
   String? createdAt;
   String? userId;
   int? cuentaId;
+  int? parentescoId;
+  Parentesco? parentesco;
 
   Permiso({
     this.id,
     this.createdAt,
     this.userId,
     this.cuentaId,
+    this.parentescoId,
+    this.parentesco,
   });
 
   Permiso.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
     createdAt = json['created_at'];
     userId = json['user_id'];
-    cuentaId = (json['cuenta_id'] is String) ? int.tryParse(json['cuenta_id']) : json['cuenta_id'];
+    cuentaId = (json['cuenta_id'] is String)
+        ? int.tryParse(json['cuenta_id'])
+        : json['cuenta_id'];
+    parentescoId = (json['parentesco_id'] is String)
+        ? int.tryParse(json['parentesco_id'])
+        : json['parentesco_id'];
+    parentesco = json['parentesco'];
   }
 
   Map<String, dynamic> toJson() {
@@ -426,6 +469,30 @@ class Permiso {
     data['created_at'] = createdAt;
     data['user_id'] = userId;
     data['cuenta_id'] = cuentaId;
+    data['parentesco_id'] = parentescoId;
+    data['parentesco'] = parentesco;
+    return data;
+  }
+}
+
+class Parentesco {
+  int? id;
+  String? createdAt;
+  String? nombre;
+
+  Parentesco({this.id, this.createdAt, this.nombre});
+
+  Parentesco.fromJson(Map<String, dynamic> json) {
+    id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
+    createdAt = json['created_at'];
+    nombre = json['nombre'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final data = <String, dynamic>{};
+    data['id'] = id;
+    data['created_at'] = createdAt;
+    data['nombre'] = nombre;
     return data;
   }
 }
@@ -462,7 +529,11 @@ class Direccion {
     createdAt = json['created_at'];
     calle = json['calle'];
     colonia = json['colonia'];
-    codigoPostal = json['codigo_postal'] != null ? (json['codigo_postal'] is int ? (json['codigo_postal'] as int).toDouble() : json['codigo_postal']) : null;
+    codigoPostal = json['codigo_postal'] != null
+        ? (json['codigo_postal'] is int
+              ? (json['codigo_postal'] as int).toDouble()
+              : json['codigo_postal'])
+        : null;
     numInt = json['num_int'];
     numExt = json['num_ext'];
     municipio = json['municipio'];
@@ -514,11 +585,21 @@ class Movimiento {
   Movimiento.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
     createdAt = json['created_at'];
-    tipoId = (json['tipo_id'] is String) ? int.tryParse(json['tipo_id']) : json['tipo_id'];
-    cantidad = json['cantidad'] != null ? (json['cantidad'] is int ? (json['cantidad'] as int).toDouble() : json['cantidad']) : null;
+    tipoId = (json['tipo_id'] is String)
+        ? int.tryParse(json['tipo_id'])
+        : json['tipo_id'];
+    cantidad = json['cantidad'] != null
+        ? (json['cantidad'] is int
+              ? (json['cantidad'] as int).toDouble()
+              : json['cantidad'])
+        : null;
     descripcion = json['descripcion'];
-    medioId = (json['medio_id'] is String) ? int.tryParse(json['medio_id']) : json['medio_id'];
-    cuentaId = (json['cuenta_id'] is String) ? int.tryParse(json['cuenta_id']) : json['cuenta_id'];
+    medioId = (json['medio_id'] is String)
+        ? int.tryParse(json['medio_id'])
+        : json['medio_id'];
+    cuentaId = (json['cuenta_id'] is String)
+        ? int.tryParse(json['cuenta_id'])
+        : json['cuenta_id'];
     tipo = json['tipo'];
     medio = json['medio'];
   }
