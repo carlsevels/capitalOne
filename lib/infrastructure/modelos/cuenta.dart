@@ -276,6 +276,8 @@ class PreMovimiento {
   Map<String, dynamic>? tipo;
   Map<String, dynamic>? medio;
   Map<String, dynamic>? status;
+  int? cuenta_destino_id;
+  int? user_por_aprobar_id;
 
   PreMovimiento({
     this.id,
@@ -289,11 +291,14 @@ class PreMovimiento {
     this.tipo,
     this.medio,
     this.status,
+    this.cuenta_destino_id,
+    this.user_por_aprobar_id,
   });
 
   PreMovimiento.fromJson(Map<String, dynamic> json) {
     id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
     createdAt = json['created_at'];
+    user_por_aprobar_id = json['user_por_aprobar_id'];
     tipoId = (json['tipo_id'] is String)
         ? int.tryParse(json['tipo_id'])
         : json['tipo_id'];
@@ -315,11 +320,13 @@ class PreMovimiento {
     tipo = json['tipo'];
     medio = json['medio'];
     status = json['status'];
+    cuenta_destino_id = json['cuenta_destino_id'];
   }
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['id'] = id;
+    data['user_por_aprobar_id'] = user_por_aprobar_id;
     data['created_at'] = createdAt;
     data['tipo_id'] = tipoId;
     data['cantidad'] = cantidad;
@@ -330,6 +337,7 @@ class PreMovimiento {
     data['tipo'] = tipo;
     data['medio'] = medio;
     data['status'] = status;
+    data['cuenta_destino_id'] = cuenta_destino_id;
     return data;
   }
 }
@@ -451,16 +459,24 @@ class Permiso {
   });
 
   Permiso.fromJson(Map<String, dynamic> json) {
-    id = (json['id'] is String) ? int.tryParse(json['id']) : json['id'];
-    createdAt = json['created_at'];
-    userId = json['user_id'];
-    cuentaId = (json['cuenta_id'] is String)
+    // Manejo seguro para que acepte tanto int como String
+    id = json['id'] is String ? int.tryParse(json['id']) : json['id'];
+    createdAt = json['created_at']?.toString();
+    userId = json['user_id']?.toString();
+    
+    cuentaId = json['cuenta_id'] is String
         ? int.tryParse(json['cuenta_id'])
         : json['cuenta_id'];
-    parentescoId = (json['parentesco_id'] is String)
+        
+    parentescoId = json['parentesco_id'] is String
         ? int.tryParse(json['parentesco_id'])
         : json['parentesco_id'];
-    parentesco = json['parentesco'];
+
+    // Mapeo seguro del objeto anidado (revisa si en tu JSON viene como 'parentesco' o 'parentescos')
+    final rawParentesco = json['parentesco'] ?? json['parentescos'];
+    parentesco = (rawParentesco != null && rawParentesco is Map<String, dynamic>)
+        ? Parentesco.fromJson(rawParentesco)
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -470,11 +486,10 @@ class Permiso {
     data['user_id'] = userId;
     data['cuenta_id'] = cuentaId;
     data['parentesco_id'] = parentescoId;
-    data['parentesco'] = parentesco;
+    data['parentesco'] = parentesco?.toJson();
     return data;
   }
 }
-
 class Parentesco {
   int? id;
   String? createdAt;

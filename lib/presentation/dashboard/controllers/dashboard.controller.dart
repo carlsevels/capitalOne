@@ -13,6 +13,14 @@ class DashboardController extends GetxController {
   final Rx<DatosPersonales> _datosPersonales = DatosPersonales().obs;
   DatosPersonales get datosPersonales => _datosPersonales.value;
   set datosPersonales(value) => _datosPersonales.value = value;
+
+  final Rx<DatosPersonales> _datosPersonalesCuentaVinculada =
+      DatosPersonales().obs;
+  DatosPersonales get datosPersonalesCuentaVinculada =>
+      _datosPersonalesCuentaVinculada.value;
+  set datosPersonalesCuentaVinculada(value) =>
+      _datosPersonalesCuentaVinculada.value = value;
+
   String? userIdSeleccionado;
   var mediosList = <Medio>[].obs;
   final RxnInt medioSeleccionadoId = RxnInt();
@@ -298,7 +306,148 @@ class DashboardController extends GetxController {
     }
   }
 
-Future<void> realizarTransferencia({
+  Future<void> aprobarTransferencia(int preMovimientoId) async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      final preMovimiento = await supabase
+          .from('pre_movimiento')
+          .select()
+          .eq('id', preMovimientoId)
+          .eq('status_id', 1)
+          .maybeSingle();
+
+      if (preMovimiento == null) {
+        Get.snackbar(
+          'Error',
+          'La transferencia ya no está pendiente de aprobación',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final int cuentaOrigenId = (preMovimiento['cuenta_id'] as num).toInt();
+
+      final int cuentaDestinoId = (preMovimiento['cuenta_destino_id'] as num)
+          .toInt();
+
+      final double cantidad = (preMovimiento['cantidad'] as num).toDouble();
+
+      final int medioId = (preMovimiento['medio_id'] as num).toInt();
+
+      final String descripcion =
+          preMovimiento['descripcion']?.toString() ?? 'Transferencia bancaria';
+
+      if (cantidad <= 0) {
+        Get.snackbar(
+          'Error',
+          'La cantidad de la transferencia no es válida',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      if (cuentaOrigenId == cuentaDestinoId) {
+        Get.snackbar(
+          'Error',
+          'La cuenta de origen y destino no pueden ser la misma',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final cuentaOrigen = await supabase
+          .from('cuenta')
+          .select('saldo')
+          .eq('id', cuentaOrigenId)
+          .maybeSingle();
+
+      final cuentaDestino = await supabase
+          .from('cuenta')
+          .select('saldo')
+          .eq('id', cuentaDestinoId)
+          .maybeSingle();
+
+      if (cuentaOrigen == null || cuentaDestino == null) {
+        Get.snackbar(
+          'Error',
+          'No se encontraron las cuentas de la transferencia',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final double saldoOrigen =
+          (cuentaOrigen['saldo'] as num?)?.toDouble() ?? 0.0;
+
+      final double saldoDestino =
+          (cuentaDestino['saldo'] as num?)?.toDouble() ?? 0.0;
+
+      if (saldoOrigen < cantidad) {
+        Get.snackbar(
+          'Error',
+          'La cuenta de origen no tiene saldo suficiente',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final double nuevoSaldoOrigen = saldoOrigen - cantidad;
+      final double nuevoSaldoDestino = saldoDestino + cantidad;
+
+      await supabase
+          .from('cuenta')
+          .update({'saldo': nuevoSaldoOrigen})
+          .eq('id', cuentaOrigenId);
+
+      await supabase
+          .from('cuenta')
+          .update({'saldo': nuevoSaldoDestino})
+          .eq('id', cuentaDestinoId);
+
+      await supabase.from('movimientos').insert([
+        {
+          'cuenta_id': cuentaOrigenId,
+          'cantidad': -cantidad,
+          'descripcion': descripcion,
+          'medio_id': medioId,
+          'tipo_id': 2,
+        },
+        {
+          'cuenta_id': cuentaDestinoId,
+          'cantidad': cantidad,
+          'descripcion': descripcion,
+          'medio_id': medioId,
+          'tipo_id': 1,
+        },
+      ]);
+
+      await supabase
+          .from('pre_movimiento')
+          .update({'status_id': 2})
+          .eq('id', preMovimientoId);
+
+      Get.snackbar(
+        'Éxito',
+        'Transferencia aprobada correctamente',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFF0FDF4),
+        colorText: const Color(0xFF166534),
+      );
+
+      await preMovimientosPorAprobar();
+    } catch (e) {
+      print('Error al aprobar transferencia: $e');
+
+      Get.snackbar(
+        'Error',
+        'No se pudo aprobar la transferencia: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> realizarTransferencia({
     required int cuentaId,
     required int cuentaDestinoId,
     required double cantidad,
@@ -326,38 +475,91 @@ Future<void> realizarTransferencia({
         return;
       }
 
-      // Consultar la tabla permisos para obtener el user_id autorizado de la cuenta origen
+      // Buscar si la cuenta requiere aprobación mediante un permiso
       final permiso = await supabase
           .from('permisos')
           .select('user_id')
           .eq('cuenta_id', cuentaId)
           .limit(1)
           .maybeSingle();
+      if (permiso != null) {
+        await supabase.from('movimientos').insert({
+          'cuenta_id': cuentaId,
+          'tipo_id': 1,
+          'cantidad': cantidad,
+          'descripcion': descripcion,
+          'medio_id': medioId,
+          'status_id': 1,
+        });
 
+        await supabase.from('movimientos').insert({
+          'cuenta_id': cuentaDestinoId,
+          'tipo_id': 2,
+          'cantidad': cantidad,
+          'descripcion': 'Recepción: $descripcion',
+          'medio_id': medioId,
+          'status_id': 1,
+        });
+
+        await restarSaldoCuentaOrigen(cantidad);
+        await sumarSaldoCuentaDestino(cuentaDestinoId, cantidad);
+      }
       if (permiso == null || permiso['user_id'] == null) {
+        // No hay permisos de aprobación: Se ejecuta y manda directo a movimientos
+        try {
+          await supabase.from('movimientos').insert({
+            'cuenta_id': cuentaId,
+            'tipo_id': 1,
+            'cantidad': cantidad,
+            'descripcion': descripcion,
+            'medio_id': medioId,
+            'status_id': 1,
+          });
+
+          await supabase.from('movimientos').insert({
+            'cuenta_id': cuentaDestinoId,
+            'tipo_id': 2,
+            'cantidad': cantidad,
+            'descripcion': 'Recepción: $descripcion',
+            'medio_id': medioId,
+            'status_id': 1,
+          });
+
+          // Actualizar saldos al completarse de forma directa
+          await restarSaldoCuentaOrigen(cantidad);
+          await sumarSaldoCuentaDestino(cuentaDestinoId, cantidad);
+        } catch (e) {
+          print("Error al insertar movimiento directo: $e");
+          rethrow;
+        }
+
         Get.snackbar(
-          'Error',
-          'No se encontró un usuario con permisos para aprobar esta cuenta',
+          'Éxito',
+          'Transferencia realizada correctamente',
           snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFF0FDF4),
+          colorText: const Color(0xFF166534),
         );
         return;
       }
 
+      // Sí hay permisos: Se manda a pre_movimiento para aprobación (sin tocar saldos todavía)
       final int userPorAprobarId = (permiso['user_id'] as num).toInt();
 
-      print('Cuenta origen: $cuentaId');
-      print('Cuenta destino: $cuentaDestinoId');
-      print('Usuario por aprobar ID: $userPorAprobarId');
-
-      await supabase.from('pre_movimiento').insert({
-        'cuenta_id': cuentaId,
-        'cuenta_destino_id': cuentaDestinoId,
-        'user_por_aprobar_id': userPorAprobarId,
-        'cantidad': cantidad,
-        'descripcion': descripcion,
-        'medio_id': medioId,
-        'status_id': 1,
-      });
+      try {
+        await supabase.from('pre_movimiento').insert({
+          'cuenta_id': cuentaId,
+          'cuenta_destino_id': cuentaDestinoId,
+          'user_por_aprobar_id': userPorAprobarId,
+          'cantidad': cantidad,
+          'descripcion': descripcion,
+          'medio_id': medioId,
+          'status_id': 1,
+        });
+      } catch (e) {
+        print("Error al agregar pre_movimiento: $e");
+        rethrow;
+      }
 
       Get.snackbar(
         'Éxito',
@@ -378,7 +580,7 @@ Future<void> realizarTransferencia({
       );
     }
   }
-  
+
   Future<void> getMediosTransferencia() async {
     try {
       final response = await Supabase.instance.client
@@ -439,24 +641,55 @@ Future<void> realizarTransferencia({
 
   Future<void> getPermisosUsuario() async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) return;
+      final authUserId = Supabase.instance.client.auth.currentUser?.id;
+      if (authUserId == null) return;
 
+      // 1. Obtener el id numérico de datos_personales usando el UUID de Auth
+      final datosResponse = await Supabase.instance.client
+          .from('datos_personales')
+          .select('id')
+          .eq('owner_id', authUserId)
+          .maybeSingle();
+
+      if (datosResponse == null || datosResponse['id'] == null) {
+        print(
+          "El usuario autenticado no tiene un registro en datos_personales",
+        );
+        return;
+      }
+
+      final int datosPersonalesId = datosResponse['id'];
+      print("datos_personales.id: $datosPersonalesId");
+
+      // 2. Buscar las cuentas de las cuales este usuario es propietario (owner_id en la tabla cuenta)
       final cuentasResponse = await Supabase.instance.client
           .from('cuenta')
           .select('id')
-          .eq('owner_id', userId);
+          .eq(
+            'owner_id',
+            authUserId,
+          ); // O usa datosPersonalesId si owner_id en cuenta fuera int, pero según tu esquema es uuid
 
       final List<dynamic> cuentaIds = cuentasResponse
           .map((c) => c['id'])
           .toList();
 
-      if (cuentaIds.isEmpty) return;
-
-      final response = await Supabase.instance.client
+      // 3. Consultar permisos abarcando ambas opciones:
+      // Que el permiso sea tuyo (user_id) O que pertenezca a tus cuentas (cuenta_id)
+      var query = Supabase.instance.client
           .from('permisos')
-          .select('*, parentescos:parentescos(nombre)')
-          .inFilter('cuenta_id', cuentaIds);
+          .select('*, parentescos:parentescos(nombre)');
+
+      if (cuentaIds.isNotEmpty) {
+        // Si tiene cuentas y/o permisos asignados
+        query = query.or(
+          'user_id.eq.$datosPersonalesId,cuenta_id.in.(${cuentaIds.join(",")})',
+        );
+      } else {
+        query = query.eq('user_id', datosPersonalesId);
+      }
+
+      final response = await query;
 
       final List<Permiso> permisos = (response as List)
           .map((item) => Permiso.fromJson(item))
@@ -464,6 +697,12 @@ Future<void> realizarTransferencia({
 
       permisosList.assignAll(permisos);
       print("jsonEncode(permisosList): ${jsonEncode(permisosList)}");
+
+      if (permisosList.isEmpty) {
+        print(
+          "El usuario $datosPersonalesId no tiene permisos sobre ninguna cuenta",
+        );
+      }
     } catch (e) {
       print('Error al cargar permisos: $e');
     }
@@ -473,11 +712,13 @@ Future<void> realizarTransferencia({
     final response = await Supabase.instance.client
         .from('datos_personales')
         .select()
-        .eq('owner_id', owner_id)
+        .eq('id', owner_id)
         .single();
 
-    _datosPersonales.value = DatosPersonales.fromJson(response);
-    print(_datosPersonales);
+    datosPersonalesCuentaVinculada = DatosPersonales.fromJson(response);
+    print(
+      "Cuenta vonculada datos: ${jsonEncode(datosPersonalesCuentaVinculada)}",
+    );
   }
 
   Future<void> cargarParentescos() async {

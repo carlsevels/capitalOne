@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:capital_one/infrastructure/modelos/cuenta.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -460,11 +462,17 @@ class DashboardScreen extends GetView<DashboardController> {
                                   permisoAsociado.parentescoId ?? 0,
                                 );
                                 Get.defaultDialog(
-                                  title:
-                                      "${controller.datosPersonales.nombre} ${controller.datosPersonales.apellidoPaterno} ${controller.datosPersonales.apellidoMaterno}",
+                                  title: "",
                                   content: Obx(
-                                    () => Text(
-                                      "Parentesco: ${controller.parentescosOne.value.nombre}",
+                                    () => Column(
+                                      children: [
+                                        Text(
+                                          "${controller.datosPersonalesCuentaVinculada.nombre} ${controller.datosPersonalesCuentaVinculada.apellidoPaterno} ${controller.datosPersonalesCuentaVinculada.apellidoMaterno}",
+                                        ),
+                                        Text(
+                                          "Parentesco: ${controller.parentescosOne.value.nombre}",
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 );
@@ -1082,7 +1090,7 @@ class DashboardScreen extends GetView<DashboardController> {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                // controller.aprobarPreMovimiento(preMov);
+                                controller.aprobarTransferencia(preMov.id ?? 0);
                               },
                               icon: const Icon(Icons.check_rounded, size: 16),
                               label: const Text('Aprobar'),
@@ -1502,7 +1510,6 @@ class DashboardScreen extends GetView<DashboardController> {
                             .select('id, apodo, owner_id')
                             .eq('id', cuentaId)
                             .maybeSingle();
-
                         if (cuentaRes != null &&
                             cuentaRes['owner_id'] != null) {
                           final personaRes = await Supabase.instance.client
@@ -1765,6 +1772,21 @@ class DashboardScreen extends GetView<DashboardController> {
                               );
                             } else {
                               try {
+                                final saldoActual =
+                                    controller.cuentaSeleccionada.value?.saldo;
+
+                                if (saldoActual == null ||
+                                    saldoActual < cantidad) {
+                                  Get.snackbar(
+                                    'Fondos insuficientes',
+                                    'No tienes suficiente saldo para realizar esta transferencia',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: const Color(0xFFFEF2F2),
+                                    colorText: const Color(0xFF991B1B),
+                                  );
+                                  return;
+                                }
+
                                 await controller.realizarTransferencia(
                                   cuentaId:
                                       controller.cuentaSeleccionada.value!.id!,
@@ -1780,36 +1802,26 @@ class DashboardScreen extends GetView<DashboardController> {
                                   medioId:
                                       controller.medioSeleccionadoId.value!,
                                 );
-
-                                // Cierra el bottom sheet o modal al finalizar con éxito
-                                Get.back();
+                                // await controller.restarSaldoCuentaOrigen(
+                                //   cantidad,
+                                // );
+                                // await controller.sumarSaldoCuentaDestino(
+                                //   cuentaDestinoId,
+                                //   cantidad,
+                                // );
                               } catch (e) {
                                 print('Error en la vista al transferir: $e');
 
-                                await controller.restarSaldoCuentaOrigen(
-                                  cantidad,
-                                );
-                                await controller.sumarSaldoCuentaDestino(
-                                  cuentaDestinoId,
-                                  cantidad,
-                                );
-                                Get.back(); // Cierra el modal al finalizar con éxito
-                                Get.snackbar(
-                                  'Éxito',
-                                  'Transferencia realizada correctamente',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: const Color(0xFFF0FDF4),
-                                  colorText: const Color(0xFF166534),
-                                  icon: const Icon(
-                                    Icons.check_circle_outline_rounded,
-                                    color: Color(0xFF16A34A),
-                                  ),
-                                );
-                              } catch (e) {
                                 Get.snackbar(
                                   'Error',
                                   'No se pudo completar la transferencia: $e',
                                   snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: const Color(0xFFFEF2F2),
+                                  colorText: const Color(0xFF991B1B),
+                                  icon: const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: Color(0xFFDC2626),
+                                  ),
                                 );
                               }
                             }

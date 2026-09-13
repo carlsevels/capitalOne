@@ -1,0 +1,32 @@
+# Miscellaneous
+*.class
+*.lock
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildpath
+.project
+.settings/
+.stsCache/
+bin/
+obj/
+tmp/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.iml
+.history/
+
+# Flutter/Dart/Pub
+.dart_tool/
+.pub-cache/
+.pub/
+build/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log

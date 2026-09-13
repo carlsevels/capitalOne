@@ -98,6 +98,24 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "firebase_core",
+      "rootUri": "file:///Users/carlosvelez/.pub-cache/hosted/pub.dev/firebase_core-4.14.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "firebase_core_platform_interface",
+      "rootUri": "file:///Users/carlosvelez/.pub-cache/hosted/pub.dev/firebase_core_platform_interface-8.1.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "firebase_core_web",
+      "rootUri": "file:///Users/carlosvelez/.pub-cache/hosted/pub.dev/firebase_core_web-3.11.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
       "name": "flutter",
       "rootUri": "file:///Users/carlosvelez/development/flutter/packages/flutter",
       "packageUri": "lib/",
