@@ -298,7 +298,7 @@ class DashboardController extends GetxController {
     }
   }
 
-  Future<void> realizarTransferencia({
+Future<void> realizarTransferencia({
     required int cuentaId,
     required int cuentaDestinoId,
     required double cantidad,
@@ -306,7 +306,8 @@ class DashboardController extends GetxController {
     required int medioId,
   }) async {
     try {
-      // 1. Validaciones básicas de negocio
+      final supabase = Supabase.instance.client;
+
       if (cuentaId == cuentaDestinoId) {
         Get.snackbar(
           'Error',
@@ -325,9 +326,7 @@ class DashboardController extends GetxController {
         return;
       }
 
-      final supabase = Supabase.instance.client;
-
-      // 2. Buscar quién tiene permiso sobre MI CUENTA (cuenta de origen)
+      // Consultar la tabla permisos para obtener el user_id autorizado de la cuenta origen
       final permiso = await supabase
           .from('permisos')
           .select('user_id')
@@ -338,66 +337,48 @@ class DashboardController extends GetxController {
       if (permiso == null || permiso['user_id'] == null) {
         Get.snackbar(
           'Error',
-          'No se encontró un usuario con permiso para aprobar esta cuenta',
+          'No se encontró un usuario con permisos para aprobar esta cuenta',
           snackPosition: SnackPosition.BOTTOM,
         );
         return;
       }
 
-      final String userId = permiso['user_id'].toString();
+      final int userPorAprobarId = (permiso['user_id'] as num).toInt();
 
-      // 3. Obtener el id bigint de datos_personales basado en el owner_id del usuario con permisos
-      final datosPersonales = await supabase
-          .from('datos_personales')
-          .select('id')
-          .eq('owner_id', userId)
-          .maybeSingle();
-
-      if (datosPersonales == null || datosPersonales['id'] == null) {
-        Get.snackbar(
-          'Error',
-          'No se encontró el usuario en datos personales',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-
-      final int userPorAprobarId = (datosPersonales['id'] as num).toInt();
-
-      print('Mi cuenta (origen): $cuentaId');
+      print('Cuenta origen: $cuentaId');
       print('Cuenta destino: $cuentaDestinoId');
-      print('Usuario del permiso: $userId');
       print('Usuario por aprobar ID: $userPorAprobarId');
 
-      // 4. Crear pre-movimiento vinculado a la cuenta origen (cuentaId)
-      // Nota: Si tu lógica requiere guardar la cuenta destino, considera agregar
-      // una columna 'cuenta_destino_id' en tu tabla pre_movimiento.
       await supabase.from('pre_movimiento').insert({
         'cuenta_id': cuentaId,
+        'cuenta_destino_id': cuentaDestinoId,
+        'user_por_aprobar_id': userPorAprobarId,
         'cantidad': cantidad,
         'descripcion': descripcion,
         'medio_id': medioId,
-        'user_por_aprobar_id': userPorAprobarId,
+        'status_id': 1,
       });
 
       Get.snackbar(
         'Éxito',
-        'Transferencia registrada correctamente',
+        'Transferencia enviada para aprobación',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFF0FDF4),
+        colorText: const Color(0xFF166534),
       );
 
       await preMovimientosPorAprobar();
     } catch (e) {
+      print('Error al registrar transferencia: $e');
+
       Get.snackbar(
         'Error',
         'No se pudo completar la transferencia: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
-
-      print('Error al registrar pre-movimiento: $e');
     }
   }
-
+  
   Future<void> getMediosTransferencia() async {
     try {
       final response = await Supabase.instance.client
@@ -651,66 +632,97 @@ class DashboardController extends GetxController {
     try {
       final supabase = Supabase.instance.client;
 
-      final userId = supabase.auth.currentUser?.id;
+      // UUID del usuario autenticado
+      final authUserId = supabase.auth.currentUser?.id;
 
-      if (userId == null) {
+      if (authUserId == null) {
         preMovimientosList.clear();
         return;
       }
 
-      final permisosRes = await supabase
+      print('Auth UUID: $authUserId');
+
+      // Obtener el ID BIGINT de datos_personales
+      final datosResponse = await supabase
+          .from('datos_personales')
+          .select('id')
+          .eq('owner_id', authUserId)
+          .maybeSingle();
+
+      if (datosResponse == null || datosResponse['id'] == null) {
+        preMovimientosList.clear();
+
+        print('No se encontró datos_personales para el usuario: $authUserId');
+
+        return;
+      }
+
+      final int datosPersonalesId = (datosResponse['id'] as num).toInt();
+
+      print('datos_personales.id: $datosPersonalesId');
+
+      // Buscar las cuentas donde ESTE usuario tiene permiso.
+      //
+      // permisos.user_id es BIGINT y corresponde a
+      // datos_personales.id.
+      final permisosResponse = await supabase
           .from('permisos')
-          .select('cuenta_id, user_id')
-          .eq('user_id', userId);
+          .select('cuenta_id')
+          .eq('user_id', datosPersonalesId);
 
-      if ((permisosRes as List).isEmpty) {
+      if ((permisosResponse as List).isEmpty) {
         preMovimientosList.clear();
 
-        print('El usuario no tiene permisos sobre ninguna cuenta');
+        print(
+          'El usuario $datosPersonalesId no tiene permisos sobre ninguna cuenta',
+        );
 
         return;
       }
 
-      // 2. Obtener los cuenta_id
-      final List<int> cuentaIds = permisosRes
+      // Obtener IDs de las cuentas
+      final List<int> cuentaIds = permisosResponse
           .map((permiso) => permiso['cuenta_id'])
           .where((id) => id != null)
           .map((id) => (id as num).toInt())
           .toList();
 
-      // 3. Obtener los user_id de los permisos
-      final List<String> usuariosConPermiso = permisosRes
-          .map((permiso) => permiso['user_id']?.toString())
-          .where((id) => id != null)
-          .cast<String>()
-          .toList();
-
-      print('Usuario actual: $userId');
-      print('Cuentas con permiso: $cuentaIds');
-      print('Usuarios de permisos: $usuariosConPermiso');
-
-      if (cuentaIds.isEmpty || usuariosConPermiso.isEmpty) {
+      if (cuentaIds.isEmpty) {
         preMovimientosList.clear();
         return;
       }
 
-      // 4. Obtener pre-movimientos de esas cuentas
-      //    cuyo user_por_aprobar_id corresponde a un usuario
-      //    registrado en permisos
+      print('Usuario datos_personales: $datosPersonalesId');
+      print('Cuentas con permiso: $cuentaIds');
+
+      // Buscar transferencias pendientes de aprobación
       final response = await supabase
           .from('pre_movimiento')
           .select('''
           *,
           cuenta:cuenta_id(
+            id,
+            apodo,
+            saldo
+          ),
+          cuenta_destino:cuenta_destino_id(
+            id,
             apodo,
             saldo
           ),
           medio:medio_id(
-            nombre
+            id,
+            nombre,
+            color
+          ),
+          status:status_id(
+            id,
+            nombre,
+            color
           )
         ''')
           .inFilter('cuenta_id', cuentaIds)
-          .inFilter('user_por_aprobar_id', usuariosConPermiso)
+          .eq('user_por_aprobar_id', datosPersonalesId)
           .eq('status_id', 1)
           .order('created_at', ascending: false);
 
@@ -721,6 +733,7 @@ class DashboardController extends GetxController {
       preMovimientosList.assignAll(listaMapeada);
 
       print('Pre-movimientos por aprobar: ${listaMapeada.length}');
+
       print('Pre-movimientos: $response');
     } catch (e) {
       print('Error al cargar pre-movimientos por aprobar: $e');

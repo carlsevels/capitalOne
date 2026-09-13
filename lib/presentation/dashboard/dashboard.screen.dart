@@ -607,7 +607,7 @@ class DashboardScreen extends GetView<DashboardController> {
                   try {
                     final response = await Supabase.instance.client
                         .from('datos_personales')
-                        .select('owner_id, nombre, apellido_paterno')
+                        .select('owner_id, nombre, apellido_paterno, id')
                         .ilike('nombre', '%${textEditingValue.text}%')
                         .limit(5);
 
@@ -623,7 +623,7 @@ class DashboardScreen extends GetView<DashboardController> {
                 },
                 onSelected: (Map<String, dynamic> selection) {
                   setStateModal(() {
-                    userIdSeleccionadoModal = selection['owner_id'];
+                    userIdSeleccionadoModal = selection['id'].toString();
                     print("Usuario seleccionado: $userIdSeleccionadoModal");
                   });
                 },
@@ -1765,20 +1765,27 @@ class DashboardScreen extends GetView<DashboardController> {
                               );
                             } else {
                               try {
-                                // await controller.realizarTransferencia(
-                                //   //cuentaId: cuentaId,
-                                //   cuentaDestinoId: cuentaDestinoId,
-                                //   cantidad: cantidad,
-                                //   descripcion:
-                                //       controller.conceptoController.text
-                                //           .trim()
-                                //           .isEmpty
-                                //       ? 'Transferencia bancaria'
-                                //       : controller.conceptoController.text
-                                //             .trim(),
-                                //   medioId:
-                                //       controller.medioSeleccionadoId.value!,
-                                // );
+                                await controller.realizarTransferencia(
+                                  cuentaId:
+                                      controller.cuentaSeleccionada.value!.id!,
+                                  cuentaDestinoId: cuentaDestinoId,
+                                  cantidad: cantidad,
+                                  descripcion:
+                                      controller.conceptoController.text
+                                          .trim()
+                                          .isEmpty
+                                      ? 'Transferencia bancaria'
+                                      : controller.conceptoController.text
+                                            .trim(),
+                                  medioId:
+                                      controller.medioSeleccionadoId.value!,
+                                );
+
+                                // Cierra el bottom sheet o modal al finalizar con éxito
+                                Get.back();
+                              } catch (e) {
+                                print('Error en la vista al transferir: $e');
+
                                 await controller.restarSaldoCuentaOrigen(
                                   cantidad,
                                 );
@@ -1786,8 +1793,24 @@ class DashboardScreen extends GetView<DashboardController> {
                                   cuentaDestinoId,
                                   cantidad,
                                 );
+                                Get.back(); // Cierra el modal al finalizar con éxito
+                                Get.snackbar(
+                                  'Éxito',
+                                  'Transferencia realizada correctamente',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: const Color(0xFFF0FDF4),
+                                  colorText: const Color(0xFF166534),
+                                  icon: const Icon(
+                                    Icons.check_circle_outline_rounded,
+                                    color: Color(0xFF16A34A),
+                                  ),
+                                );
                               } catch (e) {
-                                print("Error al generar transferencia");
+                                Get.snackbar(
+                                  'Error',
+                                  'No se pudo completar la transferencia: $e',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
                               }
                             }
                             controller.cargarTodoElDashboard();
